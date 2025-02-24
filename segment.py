@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from bimorphemes import BIMORPH_BY_POS
 from sounds import SOFTNESS_UNPAIRED_CONSONANTS, VOWELS
 from endings import PART_BY_END, PAST_TENSE_VERB_ENDINGS
 from prefixes import PREFIXES
@@ -47,7 +48,7 @@ def segment_postfix(word):
 
 
 def segment(word: str, left_ind: int, right_ind, cur_result: list, possible_results, pos, has_postfix=None):
-    # TODO: Не разбирать остальные чаасти речи для отладки
+    # TODO: Не разбирать остальные части речи для отладки
     if pos not in (POSTag.PRTF, POSTag.PRTS, POSTag.VERB, POSTag.GRND):
         return None
 
@@ -63,9 +64,10 @@ def segment(word: str, left_ind: int, right_ind, cur_result: list, possible_resu
     if morpheme_candidate in possible_suffixes:
 
         prev_letter = word[left_ind - 1:left_ind]
-        if pos == POSTag.VERB and morpheme_candidate == 'л' and cur_result and cur_result[0] in PAST_TENSE_VERB_ENDINGS or \
-        pos == POSTag.GRND and not cur_result and morpheme_candidate == 'а' and prev_letter not in SOFTNESS_UNPAIRED_CONSONANTS or \
-        pos in (POSTag.PRTF, POSTag.GRND) and morpheme_candidate in ('ш', 'ши') and prev_letter in VOWELS:
+        if pos == POSTag.VERB and morpheme_candidate == 'л' and cur_result and cur_result[
+            0] in PAST_TENSE_VERB_ENDINGS or \
+                pos == POSTag.GRND and not cur_result and morpheme_candidate == 'а' and prev_letter not in SOFTNESS_UNPAIRED_CONSONANTS or \
+                pos in (POSTag.PRTF, POSTag.GRND) and morpheme_candidate in ('ш', 'ши') and prev_letter in VOWELS:
             return None
         if (
                 pos in (POSTag.PRTF, POSTag.GRND) and morpheme_candidate in ('ш', 'ши') and prev_letter == 'в' or
@@ -81,6 +83,7 @@ def segment(word: str, left_ind: int, right_ind, cur_result: list, possible_resu
     segment(word, left_ind - bias, right_ind, cur_result, possible_results, pos, has_postfix)
     return possible_results
 
+
 def correct_prefixes(pref_segm_result):
     """Скорректировать набор приставок при наличии ъ на конце"""
     has_hard_sign = False
@@ -90,6 +93,7 @@ def correct_prefixes(pref_segm_result):
             has_hard_sign = True
             hard_sign_pref_list = pref_list
     return [hard_sign_pref_list] if has_hard_sign else pref_segm_result
+
 
 def segment_prefixes(word, left_ind, depth=0, previous_step_result=[], possible_results=None):
     if possible_results is None:
@@ -167,6 +171,27 @@ def segment_suffixes(word, prev_step_results):
     return results
 
 
+def check_bimorphemes(word_segment_result):
+    """Проверить сочентание первой приставки и суффикса"""
+    bimorpheme_checked_result = []
+    for seg_result in word_segment_result:
+        pos = word_segment_result['posible_POS']
+        first_prefix = seg_result['prefixes'][0] if seg_result['prefixes'] else None
+        if pos in (POSTag.PRTF, POSTag.PRTS, POSTag.GRND):
+            last_suff_ind = -2
+        else:
+            last_suff_ind = -1
+        last_suffix = seg_result['suffixes'][last_suff_ind] if seg_result['suffixes'] else None
+        if first_prefix and last_suffix:
+            pos = word_segment_result['posible_POS']
+            is_bimorpheme = (first_prefix, last_suffix) in BIMORPH_BY_POS[pos]
+            if is_bimorpheme:
+                bimorpheme_checked_result.append(seg_result)
+    if bimorpheme_checked_result:
+        return bimorpheme_checked_result
+    return word_segment_result
+
+
 def preprocess_word(word):
     return word.strip().lower()
 
@@ -189,4 +214,5 @@ def propose_segmentation(word):
                 cur_res = deepcopy(suff_segment_result)
                 cur_res.update({'prefixes': pref_segment_result})
                 result.append(cur_res)
+    result = check_bimorphemes(result)
     return result

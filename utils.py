@@ -51,10 +51,29 @@ def create_suffixes_dict():
     return suff_by_tags
 
 
-with open('prefixes.txt', encoding='utf-8') as f:
-    pref = []
-    ln = f.readlines()
+# with open('prefixes.txt', encoding='utf-8') as f:
+#     pref = []
+#     ln = f.readlines()
+#
+#     for l in ln:
+#         pref.append(l.strip())
+# print(sorted(pref))
 
-    for l in ln:
-        pref.append(l.strip())
-print(sorted(pref))
+def create_bimorphemes_dict():
+    with open('raw_dicts/bimorphemes.txt', encoding='utf-8') as f:
+        ln = f.readlines()
+
+        key = None
+        result = dict()
+
+        for l in ln:
+            cur = tuple(l.split())
+            if len(cur) == 1:
+                key = cur[0]
+                result[key] = set()
+            else:
+                result[key].add(cur)
+        print(result)
+
+
+create_bimorphemes_dict()

@@ -34,10 +34,10 @@ while True:
                     predicted_service_morph_list = '/'.join(morph_list)
                     print(correct_service_morph_list, predicted_service_morph_list)
                     if correct_service_morph_list == predicted_service_morph_list and predicted_service_morph_list and possible_pos == 'PRTF':
-                        correct+=1
+                        correct += 1
                     if possible_pos == 'PRTF' and predicted_service_morph_list:
-                        count+=1
+                        count += 1
 
-        print(correct/count)
+        print(correct / count)
     else:
         print(propose_segmentation(word))
